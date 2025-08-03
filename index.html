@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shops Management API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .auth-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e9ecef;
+        }
+        
+        .section h2 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section h2::before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        input, button, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: transform 0.2s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .response {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            min-height: 50px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        
+        .token-display {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin-top: 10px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .api-docs {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .api-docs h3 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+        
+        .api-docs ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .api-docs li {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .method {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏪 Shops Management API</h1>
+        
+        <div class="api-docs">
+            <h3>📋 API Documentation</h3>
+            <ul>
+                <li><span class="method">POST</span> /shops - สร้างร้านใหม่ (ต้องใช้ Token)</li>
+                <li><span class="method">GET</span> /shops - ดูร้านทั้งหมด</li>
+                <li><span class="method">GET</span> /shops?name=ชื่อร้าน - ค้นหาร้านตามชื่อ</li>
+                <li><span class="method">PUT</span> /shops/:id - แก้ไขข้อมูลร้าน (ต้องใช้ Token)</li>
+                <li><span class="method">DELETE</span> /shops/:id - ลบร้าน (ต้องใช้ Token)</li>
+            </ul>
+        </div>
+        
+        <div class="auth-section">
+            <h3>🔐 Authentication</h3>
+            <div class="form-group">
+                <label>Username:</label>
+                <input type="text" id="username" value="admin" />
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="password" value="password123" />
+            </div>
+            <button onclick="login()">เข้าสู่ระบบ</button>
+            <div id="tokenDisplay" class="token-display" style="display: none;"></div>
+        </div>
+        
+        <div class="grid">
+            <div class="section">
+                <h2>➕ สร้างร้านใหม่</h2>
+                <div class="form-group">
+                    <label>ชื่อร้าน:</label>
+                    <input type="text" id="createName" placeholder="เช่น CoffeeKK" />
+                </div>
+                <div class="form-group">
+                    <label>ที่อยู่:</label>
+                    <input type="text" id="createAddress" placeholder="เช่น 123 ถนนสุขุมวิท กรุงเทพ" />
+                </div>
+                <button onclick="createShop()">สร้างร้าน</button>
+                <div id="createResponse" class="response"></div>
+            </div>
+            
+            <div class="section">
+                <h2>📋 ดูร้านทั้งหมด</h2>
+                <button onclick="getAllShops()">ดูร้านทั้งหมด</button>
+                <div id="getAllResponse" class="response"></div>
+            </div>
+            
+            <div class="section">
+                <h2>🔍 ค้นหาร้านตามชื่อ</h2>
+                <div class="form-group">
+                    <label>ชื่อร้าน:</label>
+                    <input type="text" id="searchName" placeholder="เช่น CoffeeKK" />
+                </div>
+                <button onclick="searchShop()">ค้นหา</button>
+                <div id="searchResponse" class="response"></div>
+            </div>
+            
+            <div class="section">
+                <h2>✏️ แก้ไขข้อมูลร้าน</h2>
+                <div class="form-group">
+                    <label>Shop ID:</label>
+                    <input type="number" id="updateId" placeholder="เช่น 1" />
+                </div>
+                <div class="form-group">
+                    <label>ชื่อร้านใหม่:</label>
+                    <input type="text" id="updateName" placeholder="ชื่อใหม่" />
+                </div>
+                <div class="form-group">
+                    <label>ที่อยู่ใหม่:</label>
+                    <input type="text" id="updateAddress" placeholder="ที่อยู่ใหม่" />
+                </div>
+                <button onclick="updateShop()">แก้ไข</button>
+                <div id="updateResponse" class="response"></div>
+            </div>
+            
+            <div class="section">
+                <h2>🗑️ ลบร้าน</h2>
+                <div class="form-group">
+                    <label>Shop ID:</label>
+                    <input type="number" id="deleteId" placeholder="เช่น 1" />
+                </div>
+                <button onclick="deleteShop()">ลบร้าน</button>
+                <div id="deleteResponse" class="response"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock API Server Implementation
+        class MockAPIServer {
+            constructor() {
+                this.shops = JSON.parse(localStorage.getItem('shops') || '[]');
+                this.nextId = parseInt(localStorage.getItem('nextId') || '1');
+                this.token = null;
+            }
+            
+            saveData() {
+                localStorage.setItem('shops', JSON.stringify(this.shops));
+                localStorage.setItem('nextId', this.nextId.toString());
+            }
+            
+            login(username, password) {
+                if (username === 'admin' && password === 'password123') {
+                    this.token = 'mock_jwt_token_' + Date.now();
+                    return { success: true, token: this.token };
+                }
+                return { success: false, message: 'Invalid credentials' };
+            }
+            
+            verifyToken(token) {
+                return token === this.token;
+            }
+            
+            createShop(data, token) {
+                if (!this.verifyToken(token)) {
+                    return { error: 'Unauthorized', status: 401 };
+                }
+                
+                const shop = {
+                    id: this.nextId++,
+                    name: data.name,
+                    address: data.address,
+                    createdAt: new Date().toISOString()
+                };
+                
+                this.shops.push(shop);
+                this.saveData();
+                
+                return { 
+                    success: true, 
+                    message: 'เพิ่มร้านสำเร็จ',
+                    shop: shop
+                };
+            }
+            
+            getAllShops() {
+                return {
+                    success: true,
+                    shops: this.shops.map(shop => ({
+                        id: shop.id,
+                        name: shop.name,
+                        address: shop.address
+                    }))
+                };
+            }
+            
+            getShopByName(name) {
+                const shop = this.shops.find(s => s.name.toLowerCase().includes(name.toLowerCase()));
+                if (shop) {
+                    return {
+                        success: true,
+                        shop: {
+                            id: shop.id,
+                            name: shop.name,
+                            address: shop.address
+                        }
+                    };
+                }
+                return { success: false, message: 'ไม่พบร้านที่ค้นหา' };
+            }
+            
+            updateShop(id, data, token) {
+                if (!this.verifyToken(token)) {
+                    return { error: 'Unauthorized', status: 401 };
+                }
+                
+                const shopIndex = this.shops.findIndex(s => s.id === parseInt(id));
+                if (shopIndex === -1) {
+                    return { error: 'Shop not found', status: 404 };
+                }
+                
+                this.shops[shopIndex] = {
+                    ...this.shops[shopIndex],
+                    name: data.name,
+                    address: data.address,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                this.saveData();
+                
+                return {
+                    success: true,
+                    message: 'แก้ไขข้อมูลสำเร็จ',
+                    shop: {
+                        id: this.shops[shopIndex].id,
+                        name: this.shops[shopIndex].name,
+                        address: this.shops[shopIndex].address
+                    }
+                };
+            }
+            
+            deleteShop(id, token) {
+                if (!this.verifyToken(token)) {
+                    return { error: 'Unauthorized', status: 401 };
+                }
+                
+                const shopIndex = this.shops.findIndex(s => s.id === parseInt(id));
+                if (shopIndex === -1) {
+                    return { error: 'Shop not found', status: 404 };
+                }
+                
+                this.shops.splice(shopIndex, 1);
+                this.saveData();
+                
+                return {
+                    success: true,
+                    message: 'ลบร้านสำเร็จ'
+                };
+            }
+        }
+        
+        const api = new MockAPIServer();
+        let currentToken = null;
+        
+        // Initialize with sample data if empty
+        if (api.shops.length === 0) {
+            api.token = 'sample_token';
+            api.createShop({ name: 'CoffeeKK', address: '123 ถนนสุขุมวิท กรุงเทพ' }, 'sample_token');
+            api.createShop({ name: 'Tea House', address: '456 ถนนสีลม กรุงเทพ' }, 'sample_token');
+            api.token = null;
+        }
+        
+        function displayResponse(elementId, response, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(response, null, 2);
+            element.className = `response ${isError ? 'error' : 'success'}`;
+        }
+        
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const result = api.login(username, password);
+            
+            if (result.success) {
+                currentToken = result.token;
+                document.getElementById('tokenDisplay').style.display = 'block';
+                document.getElementById('tokenDisplay').textContent = `Token: ${result.token}`;
+                alert('เข้าสู่ระบบสำเร็จ!');
+            } else {
+                alert('เข้าสู่ระบบไม่สำเร็จ!');
+            }
+        }
+        
+        function createShop() {
+            const name = document.getElementById('createName').value;
+            const address = document.getElementById('createAddress').value;
+            
+            if (!name || !address) {
+                alert('กรุณากรอกข้อมูลให้ครบ');
+                return;
+            }
+            
+            if (!currentToken) {
+                alert('กรุณาเข้าสู่ระบบก่อน');
+                return;
+            }
+            
+            const result = api.createShop({ name, address }, currentToken);
+            displayResponse('createResponse', result, !!result.error);
+            
+            if (result.success) {
+                document.getElementById('createName').value = '';
+                document.getElementById('createAddress').value = '';
+            }
+        }
+        
+        function getAllShops() {
+            const result = api.getAllShops();
+            displayResponse('getAllResponse', result);
+        }
+        
+        function searchShop() {
+            const name = document.getElementById('searchName').value;
+            
+            if (!name) {
+                alert('กรุณากรอกชื่อร้านที่ต้องการค้นหา');
+                return;
+            }
+            
+            const result = api.getShopByName(name);
+            displayResponse('searchResponse', result, !result.success);
+        }
+        
+        function updateShop() {
+            const id = document.getElementById('updateId').value;
+            const name = document.getElementById('updateName').value;
+            const address = document.getElementById('updateAddress').value;
+            
+            if (!id || !name || !address) {
+                alert('กรุณากรอกข้อมูลให้ครบ');
+                return;
+            }
+            
+            if (!currentToken) {
+                alert('กรุณาเข้าสู่ระบบก่อน');
+                return;
+            }
+            
+            const result = api.updateShop(id, { name, address }, currentToken);
+            displayResponse('updateResponse', result, !!result.error);
+        }
+        
+        function deleteShop() {
+            const id = document.getElementById('deleteId').value;
+            
+            if (!id) {
+                alert('กรุณากรอก Shop ID');
+                return;
+            }
+            
+            if (!currentToken) {
+                alert('กรุณาเข้าสู่ระบบก่อน');
+                return;
+            }
+            
+            if (confirm('คุณแน่ใจหรือไม่ที่จะลบร้านนี้?')) {
+                const result = api.deleteShop(id, currentToken);
+                displayResponse('deleteResponse', result, !!result.error);
+            }
+        }
+        
+        // Load all shops on page load
+        window.addEventListener('load', () => {
+            getAllShops();
+        });
+    </script>
+</body>
+</html>
